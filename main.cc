@@ -9,10 +9,10 @@
 #include <sstream>
 
 std::vector < pthread_t > producenci, klienci, dostawcy;	//wektory zawierające wątki producentów, klientów i dostawców
-int pojemnosc;												//pojemność samochodów dostawczych
-sem_t print;												//semafor synchronizujący wypisywanie na wyjście
-bool wypisz_przy_tworzeniu;									//czy wypisywać informację o utworzeniu wątku
-bool wypisuj_konce;											//czy wypisywać informację o zakończeniu wątku
+int pojemnosc;	//pojemność samochodów dostawczych
+sem_t print;	//semafor synchronizujący wypisywanie na wyjście
+bool wypisz_przy_tworzeniu;	//czy wypisywać informację o utworzeniu wątku
+bool wypisuj_konce;	//czy wypisywać informację o zakończeniu wątku
 
 std::string produkty[3] = {"frytki", "nuggetsy", "napój"};
 
@@ -20,9 +20,9 @@ template <class T>
 class Bufor
 {
 	T *bufor;
-	int size;		//rozmiar bufora
+	int size;	//rozmiar bufora
 	int pierwszy;	//indeks pierwszego elementu
-	int ile;		//liczba elementów w buforze
+	int ile;	//liczba elementów w buforze
 	sem_t niepelny;	//semafor blokujący dodawanie elementów do pełnego bufora
 	sem_t niepusty;	//semafor blokujący branie elementów z pustego bufora
 	sem_t sekcja;
@@ -72,7 +72,7 @@ class Bufor
 		if(licznik == max)
 			end = true;
 		sem_wait(&print);
-		std::cout<<s;						//wypisywanie komunikatu przekazanego przez wątek
+		std::cout<<s;	//wypisywanie komunikatu przekazanego przez wątek
 		sem_post(&print);
 		sem_post(&sekcja);
 		sem_post(&niepusty);
@@ -82,7 +82,7 @@ class Bufor
 	bool wez(T &res)
 	{
 		if(!end)
-			sem_wait(&niepusty);			//jeżeli limit zamówień został wyczerpany, nie czekamy aż bufor przestanie być pusty
+			sem_wait(&niepusty);	//jeżeli limit zamówień został wyczerpany, nie czekamy aż bufor przestanie być pusty
 		sem_wait(&sekcja);
 		if(ile==0 && end)
 		{
@@ -126,7 +126,7 @@ struct Klient
 	}
 };
 
-Bufor <int> buf[3];			//bufory producentów
+Bufor <int> buf[3];	//bufory producentów
 Bufor <zamowienie> buf4;	//bufor zamówień
 
 
@@ -153,8 +153,8 @@ void* producent(void *arg)
 void* klient(void*arg)
 {
 	Klient *ik = (Klient *)arg;
-	int ile = 0;							//licznik zamówień, które zostały przyjęte
-	for(int i=0; i<ik->ile_zam; i++)		//klient składa tyle zamówień, ile zostało określone przy tworzeniu klienta
+	int ile = 0;	//licznik zamówień, które zostały przyjęte
+	for(int i=0; i<ik->ile_zam; i++)	//klient składa tyle zamówień, ile zostało określone przy tworzeniu klienta
 	{
 		zamowienie zam;
 		zam.nr_klienta = ik->nr_klienta;
@@ -162,9 +162,9 @@ void* klient(void*arg)
 		zam.nr_zam = i;
 		std::stringstream s;
 		s<<"Klient nr "<<ik->nr_klienta <<" złożył zamówienie nr "<< zam.nr_zam<<std::endl;
-		if(buf4.dodaj(zam, s.str()))		//jeśli limit zamówień nie został wyczerpany, to zamówienie zostaje przyjęte
+		if(buf4.dodaj(zam, s.str()))	//jeśli limit zamówień nie został wyczerpany, to zamówienie zostaje przyjęte
 			ile++;
-		else 								//jeśli limit zamówień został wyczerpany, to kolejne zamówienia zostają odrzucone
+		else 	//jeśli limit zamówień został wyczerpany, to kolejne zamówienia zostają odrzucone
 		{
 			sem_wait(&print);
 			std::cout<<"Klient nr "<<ik->nr_klienta <<" nie może więcej zamówić, ponieważ limit zamówień na dzień dzisiejszy został wyczerpany."<<std::endl; 
@@ -173,7 +173,7 @@ void* klient(void*arg)
 		}
 	}
 	
-	for(int i=0; i<ile; i++)				//klient odbiera tyle zamówień, ile zostało przyjętych
+	for(int i=0; i<ile; i++)	//klient odbiera tyle zamówień, ile zostało przyjętych
 	{
 		zestaw z;
 		ik->bufor_klienta->wez(z);
@@ -191,12 +191,12 @@ void* klient(void*arg)
 
 void* dostawca(void *i)
 {
-	long nd = (long) i;						//nr dostawcy
+	long nd = (long) i;	//nr dostawcy
 	std::vector <zamowienie> zamowienia;	//wektor zamówień zebranych przez dostawcę z bufora
-	std::vector <zestaw> zestawy;			//wektor skompletowanych zestawów
+	std::vector <zestaw> zestawy;	//wektor skompletowanych zestawów
 	
 	while(1){
-		int ile=0;							//licznik zebranych zamówień
+		int ile=0;	//licznik zebranych zamówień
 		for(int j=0; j<pojemnosc; j++)
 		{
 			zamowienie zam;
@@ -209,13 +209,13 @@ void* dostawca(void *i)
 				break;
 				
 		}
-		for(int j=0; j<ile; j++)			//kompletowanie zestawów
+		for(int j=0; j<ile; j++)	//kompletowanie zestawów
 		{
 			zestaw z;
 			buf[0].wez(z.p1);
 			buf[1].wez(z.p2);
 			buf[2].wez(z.p3);
-			zestawy.push_back(z);			//dodanie skompletowanego zestawu do wektora zestawów
+			zestawy.push_back(z);	//dodanie skompletowanego zestawu do wektora zestawów
 		}	
 		for(int j=0; j<ile; j++)
 		{
@@ -224,12 +224,12 @@ void* dostawca(void *i)
 			zamowienia[j].bufor_klienta->dodaj(zestawy[j], s.str());	//dostarczenie j-tego zestawu klientowi z j-tego zamówienia
 			sleep(1);
 		}	
-		for(int j=0; j<ile; j++)			//opróżnienie wektora zamówień i wektora zestawów (po dostarczeniu wszystkich zestawów klientom)
+		for(int j=0; j<ile; j++)	//opróżnienie wektora zamówień i wektora zestawów (po dostarczeniu wszystkich zestawów klientom)
 		{
 			zamowienia.pop_back();
 			zestawy.pop_back();
 		}	
-		if (ile < pojemnosc)				//jeśli dostawca nie wykorzystał całej pojemności samochodu dostawczego, to znaczy, że więcej zamówień już nie ma
+		if (ile < pojemnosc)	//jeśli dostawca nie wykorzystał całej pojemności samochodu dostawczego, to znaczy, że więcej zamówień już nie ma
 			break;
 	}
 	if(wypisuj_konce)
@@ -319,18 +319,18 @@ void tworz_watki(int nd)
 
 int main ()
 {
-	buf[0].init(5);					//bufor producenta nr 0
-	buf[1].init(5);					//bufor producenta nr 1
-	buf[2].init(5);					//bufor producenta nr 2
-	buf4.init(10);					//bufor zamówień
-	int nd = 5;						//liczba dostawców
-	long nk = 10;					//liczba klientów
-	pojemnosc = 5;					//pojemność samochodów dostawczych
+	buf[0].init(5);	//bufor producenta nr 0
+	buf[1].init(5);	//bufor producenta nr 1
+	buf[2].init(5);	//bufor producenta nr 2
+	buf4.init(10);	//bufor zamówień
+	int nd = 5;	//liczba dostawców
+	long nk = 10;	//liczba klientów
+	pojemnosc = 5;	//pojemność samochodów dostawczych
 	wypisz_przy_tworzeniu = true;	//czy wypisywać informację o utworzeniu wątku
-	wypisuj_konce = true;			//czy wypisywać informację o zakończeniu wątku
+	wypisuj_konce = true;	//czy wypisywać informację o zakończeniu wątku
 	
-	buf4.max = 4*nk;				//maksymalna liczba zamówień w ciągu dnia
-	sem_init(&print, 0, 1);			//semafor synchronizujący wypisywanie na wyjście
+	buf4.max = 4*nk;	//maksymalna liczba zamówień w ciągu dnia
+	sem_init(&print, 0, 1);	//semafor synchronizujący wypisywanie na wyjście
 	int error = 0;
 	pthread_t tworca_klientow;
 	error = pthread_create(&tworca_klientow, NULL, tworz_klientow, (void *)nk);
